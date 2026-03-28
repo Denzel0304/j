@@ -308,41 +308,35 @@
   }
 
   function showDetail(i) {
-    const row = currentData[i];
-    const d = new Date(row.created_at);
-    const dateStr = d.getFullYear() + '년 ' +
-                    (d.getMonth()+1) + '월 ' +
-                    d.getDate() + '일 (' + ['일','월','화','수','목','금','토'][d.getDay()] + ')';
-    const timeStr = d.getFullYear() + '-' +
-                    String(d.getMonth()+1).padStart(2,'0') + '-' +
-                    String(d.getDate()).padStart(2,'0') + ' ' +
-                    String(d.getHours()).padStart(2,'0') + ':' +
-                    String(d.getMinutes()).padStart(2,'0');
+  const row = currentData[i];
 
-    document.getElementById('detailDate').textContent = dateStr;
-    document.getElementById('detailContent').textContent = row.notice_content;
-    document.getElementById('detailTime').textContent = '전송: ' + timeStr;
-
-    document.getElementById('listScreen').classList.add('hidden');
-    document.getElementById('detailScreen').classList.remove('hidden');
-  }
-
-  function logout() {
-    currentData = [];
-    currentStudent = {};
-    document.getElementById('inputName').value = '';
-    document.getElementById('inputPhone').value = '';
-    document.getElementById('listScreen').classList.add('hidden');
-    document.getElementById('loginScreen').classList.remove('hidden');
-  }
-
-  document.getElementById('inputPhone').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') login();
+  fetch(SB_URL + '/rest/v1/readlog', {
+    method: 'POST',
+    headers: {
+      'apikey': SB_KEY,
+      'Authorization': 'Bearer ' + SB_KEY,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      student_name: row.student_name,
+      class_name: row.class_name,
+      parent_phone: row.parent_phone,
+      notice_date: row.created_at.split('T')[0]
+    })
   });
-  document.getElementById('inputName').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') login();
-  });
-</script>
 
-</body>
-</html>
+  const d = new Date(row.created_at);
+  const dateStr = d.getFullYear() + '년 ' +
+                  (d.getMonth()+1) + '월 ' +
+                  d.getDate() + '일 (' + ['일','월','화','수','목','금','토'][d.getDay()] + ')';
+  const timeStr = d.getFullYear() + '-' +
+                  String(d.getMonth()+1).padStart(2,'0') + '-' +
+                  String(d.getDate()).padStart(2,'0') + ' ' +
+                  String(d.getHours()).padStart(2,'0') + ':' +
+                  String(d.getMinutes()).padStart(2,'0');
+  document.getElementById('detailDate').textContent = dateStr;
+  document.getElementById('detailContent').textContent = row.notice_content;
+  document.getElementById('detailTime').textContent = '전송: ' + timeStr;
+  document.getElementById('listScreen').classList.add('hidden');
+  document.getElementById('detailScreen').classList.remove('hidden');
+}
