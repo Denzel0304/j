@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>학원 알림장</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: #f1f8e9;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .header {
+    width: 100%;
+    background: #2e7d32;
+    color: #fff;
+    padding: 16px 20px;
+    text-align: center;
+  }
+  .header h1 { font-size: 18px; font-weight: 600; }
+  .header p { font-size: 12px; opacity: 0.8; margin-top: 2px; }
+
+  .container {
+    width: 100%;
+    max-width: 480px;
+    padding: 20px 16px;
+  }
+
+  /* 로그인 */
+  .login-box {
+    background: #fff;
+    border-radius: 14px;
+    padding: 28px 20px;
+    border: 1px solid #c8e6c9;
+    margin-top: 20px;
+    text-align: center;
+  }
+  .login-icon { font-size: 40px; margin-bottom: 8px; }
+  .login-title { font-size: 16px; font-weight: 600; color: #1b5e20; margin-bottom: 4px; }
+  .login-sub { font-size: 12px; color: #558b2f; margin-bottom: 20px; }
+  .field { text-align: left; margin-bottom: 14px; }
+  .field label { font-size: 12px; color: #558b2f; display: block; margin-bottom: 4px; }
+  .field input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #a5d6a7;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #333;
+    outline: none;
+  }
+  .field input:focus { border-color: #2e7d32; }
+  .btn {
+    width: 100%;
+    padding: 12px;
+    background: #2e7d32;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+  .btn:active { background: #1b5e20; }
+  .error-msg {
+    color: #c62828;
+    font-size: 12px;
+    margin-top: 10px;
+    text-align: center;
+  }
+
+  /* 학생 배너 */
+  .student-band {
+    background: #c8e6c9;
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: #2e7d32;
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 600;
+    flex-shrink: 0;
+  }
+  .sname { font-size: 15px; font-weight: 600; color: #1b5e20; }
+  .sclass { font-size: 12px; color: #388e3c; margin-top: 2px; }
+
+  /* 날짜 목록 */
+  .section-title {
+    font-size: 12px;
+    color: #558b2f;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .date-item {
+    background: #fff;
+    border: 1px solid #a5d6a7;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+  }
+  .date-item:active { background: #f1f8e9; }
+  .date-text { font-size: 13px; font-weight: 600; color: #1b5e20; }
+  .date-arrow { color: #81c784; font-size: 18px; }
+
+  /* 메세지 상세 */
+  .back-btn {
+    font-size: 13px;
+    color: #388e3c;
+    cursor: pointer;
+    margin-bottom: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .msg-date {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1b5e20;
+    margin-bottom: 12px;
+  }
+  .msg-card {
+    background: #fff;
+    border: 1px solid #a5d6a7;
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .msg-label {
+    font-size: 11px;
+    color: #81c784;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .msg-text {
+    font-size: 14px;
+    color: #333;
+    line-height: 1.8;
+  }
+  .msg-time {
+    font-size: 11px;
+    color: #a5d6a7;
+    margin-top: 12px;
+    text-align: right;
+  }
+
+  .hidden { display: none; }
+  .logout-btn {
+    font-size: 12px;
+    color: #81c784;
+    cursor: pointer;
+    text-align: right;
+    margin-bottom: 12px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📚 학원 알림장</h1>
+  <p>선생님의 메세지를 확인하세요</p>
+</div>
+
+<div class="container">
+
+  <!-- 로그인 화면 -->
+  <div id="loginScreen">
+    <div class="login-box">
+      <div class="login-icon">🌿</div>
+      <div class="login-title">학부모 포털</div>
+      <div class="login-sub">우리 아이 수업 리포트</div>
+      <div class="field">
+        <label>학생 이름</label>
+        <input type="text" id="inputName" placeholder="홍길동" />
+      </div>
+      <div class="field">
+        <label>학부모 연락처</label>
+        <input type="tel" id="inputPhone" placeholder="010-1234-5678" />
+      </div>
+      <button class="btn" onclick="login()">확인하기</button>
+      <div class="error-msg" id="loginError"></div>
+    </div>
+  </div>
+
+  <!-- 날짜 목록 화면 -->
+  <div id="listScreen" class="hidden">
+    <div class="logout-btn" onclick="logout()">← 로그아웃</div>
+    <div class="student-band">
+      <div class="avatar" id="avatarChar"></div>
+      <div>
+        <div class="sname" id="studentName"></div>
+        <div class="sclass" id="studentClass"></div>
+      </div>
+    </div>
+    <div class="section-title">수업 기록</div>
+    <div id="dateList"></div>
+  </div>
+
+  <!-- 메세지 상세 화면 -->
+  <div id="detailScreen" class="hidden">
+    <div class="back-btn" onclick="showList()">‹ 목록으로</div>
+    <div class="student-band">
+      <div class="avatar" id="avatarChar2"></div>
+      <div>
+        <div class="sname" id="studentName2"></div>
+        <div class="sclass" id="studentClass2"></div>
+      </div>
+    </div>
+    <div class="msg-date" id="detailDate"></div>
+    <div class="msg-card">
+      <div class="msg-label">선생님 메세지</div>
+      <div class="msg-text" id="detailContent"></div>
+      <div class="msg-time" id="detailTime"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const SB_URL = 'https://zkkhzsgaryoraytvsqbf.supabase.co';
+  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpra2h6c2dhcnlvcmF5dHZzcWJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc5ODM5OTcsImV4cCI6MjA1MzU1OTk5N30.UJtqcka35dVssnZRuUk6zukfjF9UNX392Shd841GSQk';
+
+  let currentData = [];
+  let currentStudent = {};
+
+  function normalizePhone(phone) {
+    return phone.replace(/[^0-9]/g, '');
+  }
+
+  async function login() {
+    const name = document.getElementById('inputName').value.trim();
+    const phone = normalizePhone(document.getElementById('inputPhone').value);
+    const errEl = document.getElementById('loginError');
+    errEl.textContent = '';
+
+    if (!name || !phone) {
+      errEl.textContent = '이름과 연락처를 모두 입력해주세요.';
+      return;
+    }
+
+    const res = await fetch(
+      SB_URL + '/rest/v1/todaysnotice?select=*&order=created_at.desc',
+      { headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY } }
+    );
+    const all = await res.json();
+
+    const matched = all.filter(row => {
+      return row.student_name === name &&
+             normalizePhone(row.parent_phone) === phone;
+    });
+
+    if (matched.length === 0) {
+      errEl.textContent = '로그인 정보가 일치하지 않습니다.';
+      return;
+    }
+
+    currentData = matched;
+    currentStudent = {
+      name: matched[0].student_name,
+      cls: matched[0].class_name
+    };
+
+    showList();
+  }
+
+  function showList() {
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('detailScreen').classList.add('hidden');
+    document.getElementById('listScreen').classList.remove('hidden');
+
+    const first = currentStudent.name.charAt(0);
+    document.getElementById('avatarChar').textContent = first;
+    document.getElementById('avatarChar2').textContent = first;
+    document.getElementById('studentName').textContent = currentStudent.name;
+    document.getElementById('studentName2').textContent = currentStudent.name;
+    document.getElementById('studentClass').textContent = currentStudent.cls;
+    document.getElementById('studentClass2').textContent = currentStudent.cls;
+
+    const listEl = document.getElementById('dateList');
+    listEl.innerHTML = '';
+
+    currentData.forEach(function(row, i) {
+      const d = new Date(row.created_at);
+      const dateStr = d.getFullYear() + '년 ' +
+                      (d.getMonth()+1) + '월 ' +
+                      d.getDate() + '일 (' + ['일','월','화','수','목','금','토'][d.getDay()] + ')';
+      const item = document.createElement('div');
+      item.className = 'date-item';
+      item.innerHTML = '<span class="date-text">' + dateStr + '</span><span class="date-arrow">›</span>';
+      item.onclick = function() { showDetail(i); };
+      listEl.appendChild(item);
+    });
+  }
+
+  function showDetail(i) {
+    const row = currentData[i];
+    const d = new Date(row.created_at);
+    const dateStr = d.getFullYear() + '년 ' +
+                    (d.getMonth()+1) + '월 ' +
+                    d.getDate() + '일 (' + ['일','월','화','수','목','금','토'][d.getDay()] + ')';
+    const timeStr = d.getFullYear() + '-' +
+                    String(d.getMonth()+1).padStart(2,'0') + '-' +
+                    String(d.getDate()).padStart(2,'0') + ' ' +
+                    String(d.getHours()).padStart(2,'0') + ':' +
+                    String(d.getMinutes()).padStart(2,'0');
+
+    document.getElementById('detailDate').textContent = dateStr;
+    document.getElementById('detailContent').textContent = row.notice_content;
+    document.getElementById('detailTime').textContent = '전송: ' + timeStr;
+
+    document.getElementById('listScreen').classList.add('hidden');
+    document.getElementById('detailScreen').classList.remove('hidden');
+  }
+
+  function logout() {
+    currentData = [];
+    currentStudent = {};
+    document.getElementById('inputName').value = '';
+    document.getElementById('inputPhone').value = '';
+    document.getElementById('listScreen').classList.add('hidden');
+    document.getElementById('loginScreen').classList.remove('hidden');
+  }
+
+  document.getElementById('inputPhone').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') login();
+  });
+  document.getElementById('inputName').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') login();
+  });
+</script>
+
+</body>
+</html>
