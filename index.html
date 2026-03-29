@@ -413,7 +413,7 @@
     btn.disabled = true;
     btn.textContent = '전송 중...';
 
-    const msg = currentStudent.cls + '반, ' + currentStudent.name + ' 학생 어머님께서 상담신청을 하셨습니다.\n\n"' + text + '"';
+    const msg = currentStudent.cls + '반, ' + currentStudent.name + ' 학생 어머님께서 상담신청을 하셨습니다.\n\n\u201c' + text + '\u201d';
 
     try {
       await fetch('https://api.telegram.org/bot' + TG_TOKEN + '/sendMessage', {
