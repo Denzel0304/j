@@ -148,6 +148,68 @@
     text-align: right;
     margin-bottom: 12px;
   }
+  .consult-btn-wrap {
+    margin-top: 20px;
+    text-align: center;
+  }
+  .consult-btn {
+    padding: 12px 32px;
+    background: #fff;
+    color: #2e7d32;
+    border: 2px solid #2e7d32;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .consult-btn:active { background: #f1f8e9; }
+  .consult-box {
+    background: #fff;
+    border: 1px solid #a5d6a7;
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 16px;
+  }
+  .consult-guide {
+    font-size: 13px;
+    color: #2e7d32;
+    line-height: 1.8;
+    margin-bottom: 12px;
+  }
+  .consult-box textarea {
+    width: 100%;
+    height: 100px;
+    padding: 10px;
+    border: 1px solid #a5d6a7;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #333;
+    outline: none;
+    resize: vertical;
+    line-height: 1.6;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+  .consult-box textarea:focus { border-color: #2e7d32; }
+  .consult-submit {
+    width: 100%;
+    margin-top: 10px;
+    padding: 11px;
+    background: #2e7d32;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .consult-submit:disabled { background: #aaa; cursor: not-allowed; }
+  .consult-done {
+    text-align: center;
+    color: #2e7d32;
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 12px;
+  }
 </style>
 </head>
 <body>
@@ -188,6 +250,17 @@
     </div>
     <div class="section-title">수업 기록</div>
     <div id="dateList"></div>
+    <div class="consult-btn-wrap">
+      <button class="consult-btn" onclick="toggleConsult()">📋 상담 신청</button>
+    </div>
+    <div class="consult-box hidden" id="consultBox">
+      <div class="consult-guide">
+        상담 가능하신 요일과 시간, 간단한 상담 내용을 적어주시면 전화드리겠습니다.
+      </div>
+      <textarea id="consultText" placeholder="예) 화요일 오후 2시 이후 가능합니다. 수학 진도 관련해서 여쭤보고 싶습니다."></textarea>
+      <button class="consult-submit" id="consultSubmit" onclick="submitConsult()">신청하기</button>
+      <div class="consult-done hidden" id="consultDone">✅ 상담 신청이 완료되었습니다.</div>
+    </div>
   </div>
 
   <div id="detailScreen" class="hidden">
@@ -212,6 +285,8 @@
 <script>
   const SB_URL = 'https://zkkhzsgaryoraytvsqbf.supabase.co';
   const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpra2h6c2dhcnlvcmF5dHZzcWJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc5ODM5OTcsImV4cCI6MjA1MzU1OTk5N30.UJtqcka35dVssnZRuUk6zukfjF9UNX392Shd841GSQk';
+  const TG_TOKEN = '8751089731:AAELCVqS3nsTJcgv52sgM6JbB_9WrfAdkoc';
+  const TG_CHAT_ID = '8777505810';
 
   let currentData = [];
   let currentStudent = {};
@@ -320,6 +395,42 @@
     document.getElementById('detailTime').textContent = '전송: ' + timeStr;
     document.getElementById('listScreen').classList.add('hidden');
     document.getElementById('detailScreen').classList.remove('hidden');
+  }
+
+  function toggleConsult() {
+    const box = document.getElementById('consultBox');
+    box.classList.toggle('hidden');
+  }
+
+  async function submitConsult() {
+    const text = document.getElementById('consultText').value.trim();
+    if (!text) {
+      alert('상담 내용을 입력해주세요.');
+      return;
+    }
+
+    const btn = document.getElementById('consultSubmit');
+    btn.disabled = true;
+    btn.textContent = '전송 중...';
+
+    const msg = currentStudent.cls + '반, ' + currentStudent.name + ' 학생 어머님께서 상담신청을 하셨습니다.\n\n' + text;
+
+    try {
+      await fetch('https://api.telegram.org/bot' + TG_TOKEN + '/sendMessage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: TG_CHAT_ID, text: msg })
+      });
+
+      btn.classList.add('hidden');
+      document.getElementById('consultDone').classList.remove('hidden');
+      document.getElementById('consultText').disabled = true;
+
+    } catch(e) {
+      btn.disabled = false;
+      btn.textContent = '신청하기';
+      alert('전송 실패. 다시 시도해주세요.');
+    }
   }
 
   function logout() {
