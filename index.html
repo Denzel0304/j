@@ -23,14 +23,11 @@
   }
   .header h1 { font-size: 18px; font-weight: 600; }
   .header p { font-size: 12px; opacity: 0.8; margin-top: 2px; }
-
   .container {
     width: 100%;
     max-width: 480px;
     padding: 20px 16px;
   }
-
-  /* 로그인 */
   .login-box {
     background: #fff;
     border-radius: 14px;
@@ -73,8 +70,6 @@
     margin-top: 10px;
     text-align: center;
   }
-
-  /* 학생 배너 */
   .student-band {
     background: #c8e6c9;
     border-radius: 12px;
@@ -95,8 +90,6 @@
   }
   .sname { font-size: 15px; font-weight: 600; color: #1b5e20; }
   .sclass { font-size: 12px; color: #388e3c; margin-top: 2px; }
-
-  /* 날짜 목록 */
   .section-title {
     font-size: 12px;
     color: #558b2f;
@@ -117,8 +110,6 @@
   .date-item:active { background: #f1f8e9; }
   .date-text { font-size: 13px; font-weight: 600; color: #1b5e20; }
   .date-arrow { color: #81c784; font-size: 18px; }
-
-  /* 메세지 상세 */
   .back-btn {
     font-size: 13px;
     color: #388e3c;
@@ -147,18 +138,8 @@
     letter-spacing: 0.5px;
     margin-bottom: 6px;
   }
-  .msg-text {
-    font-size: 14px;
-    color: #333;
-    line-height: 1.8;
-  }
-  .msg-time {
-    font-size: 11px;
-    color: #a5d6a7;
-    margin-top: 12px;
-    text-align: right;
-  }
-
+  .msg-text { font-size: 14px; color: #333; line-height: 1.8; }
+  .msg-time { font-size: 11px; color: #a5d6a7; margin-top: 12px; text-align: right; }
   .hidden { display: none; }
   .logout-btn {
     font-size: 12px;
@@ -178,7 +159,6 @@
 
 <div class="container">
 
-  <!-- 로그인 화면 -->
   <div id="loginScreen">
     <div class="login-box">
       <div class="login-icon">🌿</div>
@@ -197,7 +177,6 @@
     </div>
   </div>
 
-  <!-- 날짜 목록 화면 -->
   <div id="listScreen" class="hidden">
     <div class="logout-btn" onclick="logout()">← 로그아웃</div>
     <div class="student-band">
@@ -211,7 +190,6 @@
     <div id="dateList"></div>
   </div>
 
-  <!-- 메세지 상세 화면 -->
   <div id="detailScreen" class="hidden">
     <div class="back-btn" onclick="showList()">‹ 목록으로</div>
     <div class="student-band">
@@ -254,7 +232,7 @@
     }
 
     const res = await fetch(
-      SB_URL + '/rest/v1/todaysnotice?select=*&order=created_at.desc',
+      SB_URL + '/rest/v1/todaysnotice?select=*&order=lesson_date.desc',
       { headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY } }
     );
     const all = await res.json();
@@ -295,7 +273,7 @@
     listEl.innerHTML = '';
 
     currentData.forEach(function(row, i) {
-      const d = new Date(row.created_at);
+      const d = new Date(row.lesson_date + 'T00:00:00');
       const dateStr = d.getFullYear() + '년 ' +
                       (d.getMonth()+1) + '월 ' +
                       d.getDate() + '일 (' + ['일','월','화','수','목','금','토'][d.getDay()] + ')';
@@ -308,40 +286,43 @@
   }
 
   function showDetail(i) {
-  const row = currentData[i];
+    const row = currentData[i];
 
-  fetch(SB_URL + '/rest/v1/readlog', {
-    method: 'POST',
-    headers: {
-      'apikey': SB_KEY,
-      'Authorization': 'Bearer ' + SB_KEY,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      student_name: row.student_name,
-      class_name: row.class_name,
-      parent_phone: row.parent_phone,
-      notice_date: row.created_at.split('T')[0]
-    })
-  });
+    fetch(SB_URL + '/rest/v1/readlog', {
+      method: 'POST',
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': 'Bearer ' + SB_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        student_name: row.student_name,
+        class_name: row.class_name,
+        parent_phone: row.parent_phone,
+        notice_date: row.lesson_date
+      })
+    });
 
-  const d = new Date(row.created_at);
-  const dateStr = d.getFullYear() + '년 ' +
-                  (d.getMonth()+1) + '월 ' +
-                  d.getDate() + '일 (' + ['일','월','화','수','목','금','토'][d.getDay()] + ')';
-  const timeStr = d.getFullYear() + '-' +
-                  String(d.getMonth()+1).padStart(2,'0') + '-' +
-                  String(d.getDate()).padStart(2,'0') + ' ' +
-                  String(d.getHours()).padStart(2,'0') + ':' +
-                  String(d.getMinutes()).padStart(2,'0');
-  document.getElementById('detailDate').textContent = dateStr;
-  document.getElementById('detailContent').textContent = row.notice_content;
-  document.getElementById('detailTime').textContent = '전송: ' + timeStr;
-  document.getElementById('listScreen').classList.add('hidden');
-  document.getElementById('detailScreen').classList.remove('hidden');
-}
+    const d = new Date(row.lesson_date + 'T00:00:00');
+    const dateStr = d.getFullYear() + '년 ' +
+                    (d.getMonth()+1) + '월 ' +
+                    d.getDate() + '일 (' + ['일','월','화','수','목','금','토'][d.getDay()] + ')';
 
- function logout() {
+    const t = new Date(row.created_at);
+    const timeStr = t.getFullYear() + '-' +
+                    String(t.getMonth()+1).padStart(2,'0') + '-' +
+                    String(t.getDate()).padStart(2,'0') + ' ' +
+                    String(t.getHours()).padStart(2,'0') + ':' +
+                    String(t.getMinutes()).padStart(2,'0');
+
+    document.getElementById('detailDate').textContent = dateStr;
+    document.getElementById('detailContent').textContent = row.notice_content;
+    document.getElementById('detailTime').textContent = '전송: ' + timeStr;
+    document.getElementById('listScreen').classList.add('hidden');
+    document.getElementById('detailScreen').classList.remove('hidden');
+  }
+
+  function logout() {
     currentData = [];
     currentStudent = {};
     document.getElementById('inputName').value = '';
