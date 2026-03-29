@@ -307,9 +307,9 @@
     }
 
     const res = await fetch(
-      SB_URL + '/rest/v1/todaysnotice?select=*&student_name=eq.' + encodeURIComponent(name) + '&parent_phone=eq.' + encodeURIComponent(phone) + '&order=lesson_date.desc,created_at.desc',
-      { headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY } }
-    );
+  SB_URL + '/rest/v1/todaysnotice?select=*&student_name=eq.' + encodeURIComponent(name) + '&order=lesson_date.desc,created_at.desc',
+  { headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY } }
+);
     const all = await res.json();
 
     const matched = all.filter(row => {
