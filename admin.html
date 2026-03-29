@@ -28,8 +28,6 @@
     max-width: 600px;
     padding: 20px 16px;
   }
-
-  /* 로그인 */
   .login-box {
     background: #fff;
     border-radius: 14px;
@@ -66,8 +64,6 @@
   }
   .btn:active { background: #2e7d32; }
   .error-msg { color: #c62828; font-size: 12px; margin-top: 10px; }
-
-  /* 통계 카드 */
   .stats-row {
     display: flex;
     gap: 10px;
@@ -83,15 +79,13 @@
   }
   .stat-num { font-size: 24px; font-weight: 600; color: #1b5e20; }
   .stat-label { font-size: 11px; color: #81c784; margin-top: 4px; }
-
-  /* 필터 */
   .filter-row {
     display: flex;
     gap: 8px;
     margin-bottom: 14px;
     align-items: center;
   }
-  .filter-row input, .filter-row select {
+  .filter-row input {
     flex: 1;
     padding: 8px 10px;
     border: 1px solid #a5d6a7;
@@ -101,8 +95,6 @@
     outline: none;
     background: #fff;
   }
-
-  /* 로그 테이블 */
   .log-wrap {
     background: #fff;
     border: 1px solid #c8e6c9;
@@ -128,7 +120,6 @@
   }
   .log-item:last-child { border-bottom: none; }
   .log-item:nth-child(even) { background: #f9fbe7; }
-
   .section-title {
     font-size: 12px;
     color: #558b2f;
@@ -160,7 +151,6 @@
 
 <div class="container">
 
-  <!-- 로그인 -->
   <div id="loginScreen">
     <div class="login-box">
       <div class="login-icon">🌿</div>
@@ -174,11 +164,9 @@
     </div>
   </div>
 
-  <!-- 관리자 화면 -->
   <div id="adminScreen" class="hidden">
     <div class="logout-btn" onclick="logout()">← 로그아웃</div>
 
-    <!-- 통계 -->
     <div class="stats-row">
       <div class="stat-card">
         <div class="stat-num" id="totalCount">0</div>
@@ -194,7 +182,6 @@
       </div>
     </div>
 
-    <!-- 필터 -->
     <div class="filter-row">
       <input type="text" id="filterName" placeholder="학생 이름 검색" oninput="applyFilter()" />
       <input type="date" id="filterDate" oninput="applyFilter()" />
@@ -205,7 +192,7 @@
       <div class="log-header">
         <span>학생</span>
         <span>반</span>
-        <span>공지 날짜</span>
+        <span>수업 날짜</span>
         <span>열람 시간</span>
       </div>
       <div id="logList"></div>
@@ -219,59 +206,70 @@
   const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpra2h6c2dhcnlvcmF5dHZzcWJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc5ODM5OTcsImV4cCI6MjA1MzU1OTk5N30.UJtqcka35dVssnZRuUk6zukfjF9UNX392Shd841GSQk';
   const ADMIN_PW = '4037';
 
-  let allLogs = [];
-
   function login() {
     const pw = document.getElementById('inputPw').value;
     if (pw === ADMIN_PW) {
       document.getElementById('loginScreen').classList.add('hidden');
       document.getElementById('adminScreen').classList.remove('hidden');
-      loadLogs();
+      loadStats();
+      applyFilter();
     } else {
       document.getElementById('loginError').textContent = '비밀번호가 틀렸습니다.';
     }
   }
 
-  async function loadLogs() {
-    const res = await fetch(
-      SB_URL + '/rest/v1/readlog?select=*&order=read_at.desc',
+  async function loadStats() {
+    const today = new Date().toISOString().split('T')[0];
+
+    // 전체 열람 수
+    const resTotal = await fetch(
+      SB_URL + '/rest/v1/readlog?select=id',
+      { headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Prefer': 'count=exact', 'Range': '0-0' } }
+    );
+    const totalCount = parseInt(resTotal.headers.get('content-range').split('/')[1]);
+
+    // 오늘 열람 수
+    const resToday = await fetch(
+      SB_URL + '/rest/v1/readlog?select=id&read_at=gte.' + today + 'T00:00:00',
+      { headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Prefer': 'count=exact', 'Range': '0-0' } }
+    );
+    const todayCount = parseInt(resToday.headers.get('content-range').split('/')[1]);
+
+    // 열람 학생 수 (unique) — student_name만 받아서 중복 제거
+    const resUnique = await fetch(
+      SB_URL + '/rest/v1/readlog?select=student_name',
       { headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY } }
     );
-    allLogs = await res.json();
+    const uniqueData = await resUnique.json();
+    const uniqueCount = new Set(uniqueData.map(r => r.student_name)).size;
 
-    // 통계
-    const today = new Date().toISOString().split('T')[0];
-    const todayLogs = allLogs.filter(r => r.read_at.startsWith(today));
-    const uniqueStudents = new Set(allLogs.map(r => r.student_name)).size;
-
-    document.getElementById('totalCount').textContent = allLogs.length;
-    document.getElementById('todayCount').textContent = todayLogs.length;
-    document.getElementById('uniqueCount').textContent = uniqueStudents;
-
-    applyFilter();
+    document.getElementById('totalCount').textContent = totalCount;
+    document.getElementById('todayCount').textContent = todayCount;
+    document.getElementById('uniqueCount').textContent = uniqueCount;
   }
 
-  function applyFilter() {
+  async function applyFilter() {
     const nameFilter = document.getElementById('filterName').value.trim();
     const dateFilter = document.getElementById('filterDate').value;
 
-    let filtered = allLogs;
-    if (nameFilter) {
-      filtered = filtered.filter(r => r.student_name.includes(nameFilter));
-    }
-    if (dateFilter) {
-      filtered = filtered.filter(r => r.notice_date === dateFilter);
-    }
+    let url = SB_URL + '/rest/v1/readlog?select=*&order=read_at.desc';
+    if (nameFilter) url += '&student_name=like.*' + encodeURIComponent(nameFilter) + '*';
+    if (dateFilter) url += '&notice_date=eq.' + dateFilter;
+
+    const res = await fetch(url, {
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+    });
+    const logs = await res.json();
 
     const listEl = document.getElementById('logList');
     listEl.innerHTML = '';
 
-    if (filtered.length === 0) {
+    if (logs.length === 0) {
       listEl.innerHTML = '<div class="empty-msg">기록이 없습니다.</div>';
       return;
     }
 
-    filtered.forEach(function(r) {
+    logs.forEach(function(r) {
       const d = new Date(r.read_at);
       const timeStr = d.getFullYear() + '-' +
                       String(d.getMonth()+1).padStart(2,'0') + '-' +
