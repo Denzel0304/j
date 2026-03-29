@@ -422,9 +422,11 @@
         body: JSON.stringify({ chat_id: TG_CHAT_ID, text: msg })
       });
 
-      btn.classList.add('hidden');
-      document.getElementById('consultDone').classList.remove('hidden');
-      document.getElementById('consultText').disabled = true;
+      document.getElementById('consultBox').classList.add('hidden');
+      document.getElementById('consultText').value = '';
+      document.getElementById('consultText').disabled = false;
+      document.getElementById('consultSubmit').disabled = false;
+      document.getElementById('consultSubmit').textContent = '신청하기';
 
     } catch(e) {
       btn.disabled = false;
