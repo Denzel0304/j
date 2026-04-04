@@ -204,15 +204,20 @@
 <script>
   const SB_URL = 'https://zkkhzsgaryoraytvsqbf.supabase.co';
   const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpra2h6c2dhcnlvcmF5dHZzcWJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc5ODM5OTcsImV4cCI6MjA1MzU1OTk5N30.UJtqcka35dVssnZRuUk6zukfjF9UNX392Shd841GSQk';
-  const ADMIN_PW = '4037';
+  const ADMIN_PW = 'ss2412';
+
+ function showAdmin() {
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('adminScreen').classList.remove('hidden');
+    loadStats();
+    applyFilter();
+  }
 
   function login() {
     const pw = document.getElementById('inputPw').value;
     if (pw === ADMIN_PW) {
-      document.getElementById('loginScreen').classList.add('hidden');
-      document.getElementById('adminScreen').classList.remove('hidden');
-      loadStats();
-      applyFilter();
+      localStorage.setItem('admin_auth', 'true');
+      showAdmin();
     } else {
       document.getElementById('loginError').textContent = '비밀번호가 틀렸습니다.';
     }
@@ -289,10 +294,13 @@
   }
 
   function logout() {
+    localStorage.removeItem('admin_auth');
     document.getElementById('inputPw').value = '';
     document.getElementById('adminScreen').classList.add('hidden');
     document.getElementById('loginScreen').classList.remove('hidden');
   }
+
+  if (localStorage.getItem('admin_auth') === 'true') showAdmin();
 
   document.getElementById('inputPw').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') login();
