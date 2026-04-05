@@ -64,6 +64,7 @@
     margin-top: 4px;
   }
   .btn:active { background: #1b5e20; }
+  .btn:disabled { background: #a5d6a7; cursor: default; }
   .error-msg {
     color: #c62828;
     font-size: 12px;
@@ -234,7 +235,7 @@
         <label>학부모 연락처</label>
         <input type="tel" id="inputPhone" placeholder="01012345678" />
       </div>
-      <button class="btn" onclick="login()">확인하기</button>
+      <button class="btn" id="loginBtn" onclick="login()">확인하기</button>
       <div class="error-msg" id="loginError"></div>
     </div>
   </div>
@@ -283,22 +284,31 @@
 </div>
 
 <script>
-  const SB_URL = 'https://zkkhzsgaryoraytvsqbf.supabase.co';
-  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpra2h6c2dhcnlvcmF5dHZzcWJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc5ODM5OTcsImV4cCI6MjA1MzU1OTk5N30.UJtqcka35dVssnZRuUk6zukfjF9UNX392Shd841GSQk';
-  const TG_TOKEN = '8751089731:AAELCVqS3nsTJcgv52sgM6JbB_9WrfAdkoc';
-  const TG_CHAT_ID = '8777505810';
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbzSJblgGLbS4hY-WMnjhgwWekId2Kx1LrdNMt944Bs1dGqKfvSchBrN60KFsdQfIZoCTw/exec';
 
   let currentData = [];
   let currentStudent = {};
+
+  async function gasCall(params) {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams(params).toString()
+    });
+    const text = await res.text();
+    return JSON.parse(text);
+  }
 
   function normalizePhone(phone) {
     return phone.replace(/[^0-9]/g, '');
   }
 
   async function login() {
-    const name = document.getElementById('inputName').value.trim();
+    const name  = document.getElementById('inputName').value.trim();
     const phone = normalizePhone(document.getElementById('inputPhone').value);
     const errEl = document.getElementById('loginError');
+    const btn   = document.getElementById('loginBtn');
     errEl.textContent = '';
 
     if (!name || !phone) {
@@ -306,29 +316,24 @@
       return;
     }
 
-    const res = await fetch(
-  SB_URL + '/rest/v1/todaysnotice?select=*&student_name=eq.' + encodeURIComponent(name) + '&order=lesson_date.desc,created_at.desc',
-  { headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY } }
-);
-    const all = await res.json();
+    btn.disabled = true;
+    btn.textContent = '확인 중...';
 
-    const matched = all.filter(row => {
-      return row.student_name === name &&
-             normalizePhone(row.parent_phone) === phone;
-    });
-
-    if (matched.length === 0) {
-      errEl.textContent = '로그인 정보가 일치하지 않습니다.';
-      return;
+    try {
+      const result = await gasCall({ action: 'portalLogin', name, phone });
+      if (result.success) {
+        currentData    = result.data;
+        currentStudent = { name: result.data[0].student_name, cls: result.data[0].class_name };
+        showList();
+      } else {
+        errEl.textContent = '로그인 정보가 일치하지 않습니다.';
+      }
+    } catch(e) {
+      errEl.textContent = '오류가 발생했습니다. 다시 시도해주세요.';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '확인하기';
     }
-
-    currentData = matched;
-    currentStudent = {
-      name: matched[0].student_name,
-      cls: matched[0].class_name
-    };
-
-    showList();
   }
 
   function showList() {
@@ -337,11 +342,11 @@
     document.getElementById('listScreen').classList.remove('hidden');
 
     const first = currentStudent.name.charAt(0);
-    document.getElementById('avatarChar').textContent = first;
+    document.getElementById('avatarChar').textContent  = first;
     document.getElementById('avatarChar2').textContent = first;
-    document.getElementById('studentName').textContent = currentStudent.name;
+    document.getElementById('studentName').textContent  = currentStudent.name;
     document.getElementById('studentName2').textContent = currentStudent.name;
-    document.getElementById('studentClass').textContent = currentStudent.cls;
+    document.getElementById('studentClass').textContent  = currentStudent.cls;
     document.getElementById('studentClass2').textContent = currentStudent.cls;
 
     const listEl = document.getElementById('dateList');
@@ -363,19 +368,13 @@
   function showDetail(i) {
     const row = currentData[i];
 
-    fetch(SB_URL + '/rest/v1/readlog', {
-      method: 'POST',
-      headers: {
-        'apikey': SB_KEY,
-        'Authorization': 'Bearer ' + SB_KEY,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        student_name: row.student_name,
-        class_name: row.class_name,
-        parent_phone: row.parent_phone,
-        notice_date: row.lesson_date
-      })
+    // 열람 로그 기록 (응답 기다리지 않음)
+    gasCall({
+      action:      'portalLogRead',
+      studentName: row.student_name,
+      className:   row.class_name,
+      parentPhone: row.parent_phone,
+      noticeDate:  row.lesson_date
     });
 
     const d = new Date(row.lesson_date + 'T00:00:00');
@@ -390,16 +389,15 @@
                     String(t.getHours()).padStart(2,'0') + ':' +
                     String(t.getMinutes()).padStart(2,'0');
 
-    document.getElementById('detailDate').textContent = dateStr;
+    document.getElementById('detailDate').textContent    = dateStr;
     document.getElementById('detailContent').textContent = row.notice_content;
-    document.getElementById('detailTime').textContent = '전송: ' + timeStr;
+    document.getElementById('detailTime').textContent    = '전송: ' + timeStr;
     document.getElementById('listScreen').classList.add('hidden');
     document.getElementById('detailScreen').classList.remove('hidden');
   }
 
   function toggleConsult() {
-    const box = document.getElementById('consultBox');
-    box.classList.toggle('hidden');
+    document.getElementById('consultBox').classList.toggle('hidden');
   }
 
   async function submitConsult() {
@@ -413,33 +411,33 @@
     btn.disabled = true;
     btn.textContent = '전송 중...';
 
-    const msg = currentStudent.cls + '반, ' + currentStudent.name + ' 학생 어머님께서 상담신청을 하셨습니다.\n\n\u201c' + text + '\u201d';
-
     try {
-      await fetch('https://api.telegram.org/bot' + TG_TOKEN + '/sendMessage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: TG_CHAT_ID, text: msg })
+      await gasCall({
+        action:      'portalSendConsult',
+        className:   currentStudent.cls,
+        studentName: currentStudent.name,
+        text:        text
       });
 
       document.getElementById('consultBox').classList.add('hidden');
+      document.getElementById('consultDone').classList.remove('hidden');
       document.getElementById('consultText').value = '';
-      document.getElementById('consultText').disabled = false;
-      document.getElementById('consultSubmit').disabled = false;
-      document.getElementById('consultSubmit').textContent = '신청하기';
 
     } catch(e) {
+      alert('전송 실패. 다시 시도해주세요.');
+    } finally {
       btn.disabled = false;
       btn.textContent = '신청하기';
-      alert('전송 실패. 다시 시도해주세요.');
     }
   }
 
   function logout() {
-    currentData = [];
+    currentData    = [];
     currentStudent = {};
-    document.getElementById('inputName').value = '';
+    document.getElementById('inputName').value  = '';
     document.getElementById('inputPhone').value = '';
+    document.getElementById('consultDone').classList.add('hidden');
+    document.getElementById('consultBox').classList.add('hidden');
     document.getElementById('listScreen').classList.add('hidden');
     document.getElementById('loginScreen').classList.remove('hidden');
   }
