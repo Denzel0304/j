@@ -209,10 +209,12 @@
     const token = localStorage.getItem('admin_token');
     const res = await fetch(GAS_URL, {
       method: 'POST',
+      redirect: 'follow',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({ ...params, token }).toString()
     });
-    return await res.json();
+    const text = await res.text();
+    return JSON.parse(text);
   }
 
   function showAdmin() {
