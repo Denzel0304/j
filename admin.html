@@ -206,7 +206,7 @@
   const GAS_URL = 'https://script.google.com/macros/s/AKfycbzSJblgGLbS4hY-WMnjhgwWekId2Kx1LrdNMt944Bs1dGqKfvSchBrN60KFsdQfIZoCTw/exec';
 
   async function gasCall(params) {
-    const token = localStorage.getItem('admin_token');
+    const token = localStorage.getItem('readlog_token');
     const res = await fetch(GAS_URL, {
       method: 'POST',
       redirect: 'follow',
@@ -234,11 +234,11 @@
       const result = await gasCall({ action: 'checkPassword', password: pw });
 
       if (result.success) {
-        localStorage.setItem('admin_auth',  'true');
-        localStorage.setItem('admin_token', result.token);
+        localStorage.setItem('readlog_auth',  'true');
+        localStorage.setItem('readlog_token', result.token);
         showAdmin();
       } else {
-       document.getElementById('loginError').textContent = result.message || '비밀번호가 틀렸습니다.';
+        document.getElementById('loginError').textContent = result.message || '비밀번호가 틀렸습니다.';
       }
     } catch (err) {
       document.getElementById('loginError').textContent = '오류가 발생했습니다. 다시 시도해주세요.';
@@ -297,8 +297,8 @@
   }
 
   function logout() {
-    localStorage.removeItem('admin_auth');
-    localStorage.removeItem('admin_token');
+    localStorage.removeItem('readlog_auth');
+    localStorage.removeItem('readlog_token');
     document.getElementById('inputPw').value = '';
     document.getElementById('loginError').textContent = '';
     document.getElementById('adminScreen').classList.add('hidden');
@@ -306,7 +306,7 @@
   }
 
   // 자동 로그인
-  if (localStorage.getItem('admin_auth') === 'true' && localStorage.getItem('admin_token')) {
+  if (localStorage.getItem('readlog_auth') === 'true' && localStorage.getItem('readlog_token')) {
     showAdmin();
   }
 
