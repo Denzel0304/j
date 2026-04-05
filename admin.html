@@ -228,17 +228,21 @@
     btn.disabled = true;
     btn.textContent = '확인 중...';
 
-    const result = await gasCall({ action: 'checkPassword', password: pw });
+    try {
+      const result = await gasCall({ action: 'checkPassword', password: pw });
 
-    btn.disabled = false;
-    btn.textContent = '확인';
-
-    if (result.success) {
-      localStorage.setItem('admin_auth',  'true');
-      localStorage.setItem('admin_token', result.token);
-      showAdmin();
-    } else {
-      document.getElementById('loginError').textContent = '비밀번호가 틀렸습니다.';
+      if (result.success) {
+        localStorage.setItem('admin_auth',  'true');
+        localStorage.setItem('admin_token', result.token);
+        showAdmin();
+      } else {
+        document.getElementById('loginError').textContent = '비밀번호가 틀렸습니다.';
+      }
+    } catch (err) {
+      document.getElementById('loginError').textContent = '오류가 발생했습니다. 다시 시도해주세요.';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '확인';
     }
   }
 
