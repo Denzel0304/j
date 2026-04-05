@@ -238,7 +238,7 @@
         localStorage.setItem('admin_token', result.token);
         showAdmin();
       } else {
-        document.getElementById('loginError').textContent = '비밀번호가 틀렸습니다.';
+       document.getElementById('loginError').textContent = result.message || '비밀번호가 틀렸습니다.';
       }
     } catch (err) {
       document.getElementById('loginError').textContent = '오류가 발생했습니다. 다시 시도해주세요.';
