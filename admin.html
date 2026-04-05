@@ -63,6 +63,7 @@
     margin-top: 4px;
   }
   .btn:active { background: #2e7d32; }
+  .btn:disabled { background: #a5d6a7; cursor: default; }
   .error-msg { color: #c62828; font-size: 12px; margin-top: 10px; }
   .stats-row {
     display: flex;
@@ -159,7 +160,7 @@
         <label>비밀번호</label>
         <input type="password" id="inputPw" placeholder="비밀번호 입력" />
       </div>
-      <button class="btn" onclick="login()">확인</button>
+      <button class="btn" id="loginBtn" onclick="login()">확인</button>
       <div class="error-msg" id="loginError"></div>
     </div>
   </div>
@@ -169,15 +170,15 @@
 
     <div class="stats-row">
       <div class="stat-card">
-        <div class="stat-num" id="totalCount">0</div>
+        <div class="stat-num" id="totalCount">-</div>
         <div class="stat-label">전체 열람 수</div>
       </div>
       <div class="stat-card">
-        <div class="stat-num" id="todayCount">0</div>
+        <div class="stat-num" id="todayCount">-</div>
         <div class="stat-label">오늘 열람 수</div>
       </div>
       <div class="stat-card">
-        <div class="stat-num" id="uniqueCount">0</div>
+        <div class="stat-num" id="uniqueCount">-</div>
         <div class="stat-label">열람 학생 수</div>
       </div>
     </div>
@@ -195,28 +196,46 @@
         <span>수업 날짜</span>
         <span>열람 시간</span>
       </div>
-      <div id="logList"></div>
+      <div id="logList"><div class="empty-msg">불러오는 중...</div></div>
     </div>
   </div>
 
 </div>
 
 <script>
-  const SB_URL = 'https://zkkhzsgaryoraytvsqbf.supabase.co';
-  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpra2h6c2dhcnlvcmF5dHZzcWJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc5ODM5OTcsImV4cCI6MjA1MzU1OTk5N30.UJtqcka35dVssnZRuUk6zukfjF9UNX392Shd841GSQk';
-  const ADMIN_PW = 'ss2412';
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbzSJblgGLbS4hY-WMnjhgwWekId2Kx1LrdNMt944Bs1dGqKfvSchBrN60KFsdQfIZoCTw/exec';
 
- function showAdmin() {
+  async function gasCall(params) {
+    const token = localStorage.getItem('admin_token');
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ ...params, token }).toString()
+    });
+    return await res.json();
+  }
+
+  function showAdmin() {
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('adminScreen').classList.remove('hidden');
     loadStats();
     applyFilter();
   }
 
-  function login() {
-    const pw = document.getElementById('inputPw').value;
-    if (pw === ADMIN_PW) {
-      localStorage.setItem('admin_auth', 'true');
+  async function login() {
+    const pw  = document.getElementById('inputPw').value;
+    const btn = document.getElementById('loginBtn');
+    btn.disabled = true;
+    btn.textContent = '확인 중...';
+
+    const result = await gasCall({ action: 'checkPassword', password: pw });
+
+    btn.disabled = false;
+    btn.textContent = '확인';
+
+    if (result.success) {
+      localStorage.setItem('admin_auth',  'true');
+      localStorage.setItem('admin_token', result.token);
       showAdmin();
     } else {
       document.getElementById('loginError').textContent = '비밀번호가 틀렸습니다.';
@@ -224,83 +243,66 @@
   }
 
   async function loadStats() {
-    const today = new Date().toISOString().split('T')[0];
-
-    // 전체 열람 수
-    const resTotal = await fetch(
-      SB_URL + '/rest/v1/readlog?select=id',
-      { headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Prefer': 'count=exact', 'Range': '0-0' } }
-    );
-    const totalCount = parseInt(resTotal.headers.get('content-range').split('/')[1]);
-
-    // 오늘 열람 수
-    const resToday = await fetch(
-      SB_URL + '/rest/v1/readlog?select=id&read_at=gte.' + today + 'T00:00:00',
-      { headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Prefer': 'count=exact', 'Range': '0-0' } }
-    );
-    const todayCount = parseInt(resToday.headers.get('content-range').split('/')[1]);
-
-    // 열람 학생 수 (unique) — student_name만 받아서 중복 제거
-    const resUnique = await fetch(
-      SB_URL + '/rest/v1/readlog?select=student_name',
-      { headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY } }
-    );
-    const uniqueData = await resUnique.json();
-    const uniqueCount = new Set(uniqueData.map(r => r.student_name)).size;
-
-    document.getElementById('totalCount').textContent = totalCount;
-    document.getElementById('todayCount').textContent = todayCount;
-    document.getElementById('uniqueCount').textContent = uniqueCount;
+    const result = await gasCall({ action: 'loadStats' });
+    if (!result.success) return;
+    document.getElementById('totalCount').textContent  = result.totalCount;
+    document.getElementById('todayCount').textContent  = result.todayCount;
+    document.getElementById('uniqueCount').textContent = result.uniqueCount;
   }
 
-  async function applyFilter() {
-    const nameFilter = document.getElementById('filterName').value.trim();
-    const dateFilter = document.getElementById('filterDate').value;
+  let filterTimer = null;
+  function applyFilter() {
+    clearTimeout(filterTimer);
+    filterTimer = setTimeout(doFetchLogs, 300);
+  }
 
-    let url = SB_URL + '/rest/v1/readlog?select=*&order=read_at.desc';
-    if (nameFilter) url += '&student_name=like.*' + encodeURIComponent(nameFilter) + '*';
-    if (dateFilter) url += '&notice_date=eq.' + dateFilter;
+  async function doFetchLogs() {
+    const name = document.getElementById('filterName').value.trim();
+    const date = document.getElementById('filterDate').value;
 
-    const res = await fetch(url, {
-      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
-    });
-    const logs = await res.json();
-
+    const result = await gasCall({ action: 'fetchLogs', name, date });
     const listEl = document.getElementById('logList');
     listEl.innerHTML = '';
 
-    if (logs.length === 0) {
+    if (!result.success || !result.logs.length) {
       listEl.innerHTML = '<div class="empty-msg">기록이 없습니다.</div>';
       return;
     }
 
-    logs.forEach(function(r) {
+    result.logs.forEach(function(r) {
       const d = new Date(r.read_at);
-      const timeStr = d.getFullYear() + '-' +
-                      String(d.getMonth()+1).padStart(2,'0') + '-' +
-                      String(d.getDate()).padStart(2,'0') + ' ' +
-                      String(d.getHours()).padStart(2,'0') + ':' +
-                      String(d.getMinutes()).padStart(2,'0') + ':' +
-                      String(d.getSeconds()).padStart(2,'0');
+      const timeStr =
+        d.getFullYear() + '-' +
+        String(d.getMonth()+1).padStart(2,'0') + '-' +
+        String(d.getDate()).padStart(2,'0') + ' ' +
+        String(d.getHours()).padStart(2,'0') + ':' +
+        String(d.getMinutes()).padStart(2,'0') + ':' +
+        String(d.getSeconds()).padStart(2,'0');
+
       const item = document.createElement('div');
       item.className = 'log-item';
       item.innerHTML =
         '<span>' + r.student_name + '</span>' +
-        '<span>' + r.class_name + '</span>' +
+        '<span>' + r.class_name  + '</span>' +
         '<span>' + r.notice_date + '</span>' +
-        '<span>' + timeStr + '</span>';
+        '<span>' + timeStr       + '</span>';
       listEl.appendChild(item);
     });
   }
 
   function logout() {
     localStorage.removeItem('admin_auth');
+    localStorage.removeItem('admin_token');
     document.getElementById('inputPw').value = '';
+    document.getElementById('loginError').textContent = '';
     document.getElementById('adminScreen').classList.add('hidden');
     document.getElementById('loginScreen').classList.remove('hidden');
   }
 
-  if (localStorage.getItem('admin_auth') === 'true') showAdmin();
+  // 자동 로그인
+  if (localStorage.getItem('admin_auth') === 'true' && localStorage.getItem('admin_token')) {
+    showAdmin();
+  }
 
   document.getElementById('inputPw').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') login();
