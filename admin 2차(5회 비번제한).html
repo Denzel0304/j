@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>관리자 페이지</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: #f1f8e9;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .header {
+    width: 100%;
+    background: #1b5e20;
+    color: #fff;
+    padding: 16px 20px;
+    text-align: center;
+  }
+  .header h1 { font-size: 18px; font-weight: 600; }
+  .header p { font-size: 12px; opacity: 0.8; margin-top: 2px; }
+  .container {
+    width: 100%;
+    max-width: 600px;
+    padding: 20px 16px;
+  }
+  .login-box {
+    background: #fff;
+    border-radius: 14px;
+    padding: 28px 20px;
+    border: 1px solid #c8e6c9;
+    margin-top: 20px;
+    text-align: center;
+  }
+  .login-icon { font-size: 36px; margin-bottom: 8px; }
+  .login-title { font-size: 16px; font-weight: 600; color: #1b5e20; margin-bottom: 20px; }
+  .field { text-align: left; margin-bottom: 14px; }
+  .field label { font-size: 12px; color: #558b2f; display: block; margin-bottom: 4px; }
+  .field input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #a5d6a7;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #333;
+    outline: none;
+  }
+  .field input:focus { border-color: #2e7d32; }
+  .btn {
+    width: 100%;
+    padding: 12px;
+    background: #1b5e20;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+  .btn:active { background: #2e7d32; }
+  .btn:disabled { background: #a5d6a7; cursor: default; }
+  .error-msg { color: #c62828; font-size: 12px; margin-top: 10px; }
+  .stats-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    flex: 1;
+    background: #fff;
+    border: 1px solid #c8e6c9;
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+  }
+  .stat-num { font-size: 24px; font-weight: 600; color: #1b5e20; }
+  .stat-label { font-size: 11px; color: #81c784; margin-top: 4px; }
+  .filter-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+    align-items: center;
+  }
+  .filter-row input {
+    flex: 1;
+    padding: 8px 10px;
+    border: 1px solid #a5d6a7;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #333;
+    outline: none;
+    background: #fff;
+  }
+  .log-wrap {
+    background: #fff;
+    border: 1px solid #c8e6c9;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .log-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.5fr 2.5fr;
+    background: #2e7d32;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 10px 14px;
+  }
+  .log-item {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.5fr 2.5fr;
+    padding: 10px 14px;
+    font-size: 12px;
+    border-bottom: 1px solid #e8f5e9;
+    color: #333;
+  }
+  .log-item:last-child { border-bottom: none; }
+  .log-item:nth-child(even) { background: #f9fbe7; }
+  .section-title {
+    font-size: 12px;
+    color: #558b2f;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .logout-btn {
+    font-size: 12px;
+    color: #81c784;
+    cursor: pointer;
+    text-align: right;
+    margin-bottom: 12px;
+  }
+  .hidden { display: none; }
+  .empty-msg {
+    text-align: center;
+    padding: 20px;
+    color: #a5d6a7;
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🔐 관리자 페이지</h1>
+  <p>열람 로그 확인</p>
+</div>
+
+<div class="container">
+
+  <div id="loginScreen">
+    <div class="login-box">
+      <div class="login-icon">🌿</div>
+      <div class="login-title">관리자 로그인</div>
+      <div class="field">
+        <label>비밀번호</label>
+        <input type="password" id="inputPw" placeholder="비밀번호 입력" />
+      </div>
+      <button class="btn" id="loginBtn" onclick="login()">확인</button>
+      <div class="error-msg" id="loginError"></div>
+    </div>
+  </div>
+
+  <div id="adminScreen" class="hidden">
+    <div class="logout-btn" onclick="logout()">← 로그아웃</div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-num" id="totalCount">-</div>
+        <div class="stat-label">전체 열람 수</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="todayCount">-</div>
+        <div class="stat-label">오늘 열람 수</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="uniqueCount">-</div>
+        <div class="stat-label">열람 학생 수</div>
+      </div>
+    </div>
+
+    <div class="filter-row">
+      <input type="text" id="filterName" placeholder="학생 이름 검색" oninput="applyFilter()" />
+      <input type="date" id="filterDate" oninput="applyFilter()" />
+    </div>
+
+    <div class="section-title">열람 기록</div>
+    <div class="log-wrap">
+      <div class="log-header">
+        <span>학생</span>
+        <span>반</span>
+        <span>수업 날짜</span>
+        <span>열람 시간</span>
+      </div>
+      <div id="logList"><div class="empty-msg">불러오는 중...</div></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbzSJblgGLbS4hY-WMnjhgwWekId2Kx1LrdNMt944Bs1dGqKfvSchBrN60KFsdQfIZoCTw/exec';
+
+  async function gasCall(params) {
+    const token = localStorage.getItem('readlog_token');
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ ...params, token }).toString()
+    });
+    const text = await res.text();
+    return JSON.parse(text);
+  }
+
+  function showAdmin() {
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('adminScreen').classList.remove('hidden');
+    loadStats();
+    applyFilter();
+  }
+
+  async function login() {
+    const pw  = document.getElementById('inputPw').value;
+    const btn = document.getElementById('loginBtn');
+    btn.disabled = true;
+    btn.textContent = '확인 중...';
+
+    try {
+      const result = await gasCall({ action: 'checkPassword', password: pw });
+
+      if (result.success) {
+        localStorage.setItem('readlog_auth',  'true');
+        localStorage.setItem('readlog_token', result.token);
+        showAdmin();
+      } else {
+        document.getElementById('loginError').textContent = result.message || '비밀번호가 틀렸습니다.';
+      }
+    } catch (err) {
+      document.getElementById('loginError').textContent = '오류가 발생했습니다. 다시 시도해주세요.';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '확인';
+    }
+  }
+
+  async function loadStats() {
+    const result = await gasCall({ action: 'loadStats' });
+    if (!result.success) return;
+    document.getElementById('totalCount').textContent  = result.totalCount;
+    document.getElementById('todayCount').textContent  = result.todayCount;
+    document.getElementById('uniqueCount').textContent = result.uniqueCount;
+  }
+
+  let filterTimer = null;
+  function applyFilter() {
+    clearTimeout(filterTimer);
+    filterTimer = setTimeout(doFetchLogs, 300);
+  }
+
+  async function doFetchLogs() {
+    const name = document.getElementById('filterName').value.trim();
+    const date = document.getElementById('filterDate').value;
+
+    const result = await gasCall({ action: 'fetchLogs', name, date });
+    const listEl = document.getElementById('logList');
+    listEl.innerHTML = '';
+
+    if (!result.success || !result.logs.length) {
+      listEl.innerHTML = '<div class="empty-msg">기록이 없습니다.</div>';
+      return;
+    }
+
+    result.logs.forEach(function(r) {
+      const d = new Date(r.read_at);
+      const timeStr =
+        d.getFullYear() + '-' +
+        String(d.getMonth()+1).padStart(2,'0') + '-' +
+        String(d.getDate()).padStart(2,'0') + ' ' +
+        String(d.getHours()).padStart(2,'0') + ':' +
+        String(d.getMinutes()).padStart(2,'0') + ':' +
+        String(d.getSeconds()).padStart(2,'0');
+
+      const item = document.createElement('div');
+      item.className = 'log-item';
+      item.innerHTML =
+        '<span>' + r.student_name + '</span>' +
+        '<span>' + r.class_name  + '</span>' +
+        '<span>' + r.notice_date + '</span>' +
+        '<span>' + timeStr       + '</span>';
+      listEl.appendChild(item);
+    });
+  }
+
+  function logout() {
+    localStorage.removeItem('readlog_auth');
+    localStorage.removeItem('readlog_token');
+    document.getElementById('inputPw').value = '';
+    document.getElementById('loginError').textContent = '';
+    document.getElementById('adminScreen').classList.add('hidden');
+    document.getElementById('loginScreen').classList.remove('hidden');
+  }
+
+  // 자동 로그인
+  if (localStorage.getItem('readlog_auth') === 'true' && localStorage.getItem('readlog_token')) {
+    showAdmin();
+  }
+
+  document.getElementById('inputPw').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') login();
+  });
+</script>
+
+</body>
+</html>

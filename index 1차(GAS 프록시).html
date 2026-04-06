@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>학원 알림장</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: #f1f8e9;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .header {
+    width: 100%;
+    background: #2e7d32;
+    color: #fff;
+    padding: 16px 20px;
+    text-align: center;
+  }
+  .header h1 { font-size: 18px; font-weight: 600; }
+  .header p { font-size: 12px; opacity: 0.8; margin-top: 2px; }
+  .container {
+    width: 100%;
+    max-width: 480px;
+    padding: 20px 16px;
+  }
+  .login-box {
+    background: #fff;
+    border-radius: 14px;
+    padding: 28px 20px;
+    border: 1px solid #c8e6c9;
+    margin-top: 20px;
+    text-align: center;
+  }
+  .login-icon { font-size: 40px; margin-bottom: 8px; }
+  .login-title { font-size: 16px; font-weight: 600; color: #1b5e20; margin-bottom: 4px; }
+  .login-sub { font-size: 12px; color: #558b2f; margin-bottom: 20px; }
+  .field { text-align: left; margin-bottom: 14px; }
+  .field label { font-size: 12px; color: #558b2f; display: block; margin-bottom: 4px; }
+  .field input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #a5d6a7;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #333;
+    outline: none;
+  }
+  .field input:focus { border-color: #2e7d32; }
+  .btn {
+    width: 100%;
+    padding: 12px;
+    background: #2e7d32;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+  .btn:active { background: #1b5e20; }
+  .btn:disabled { background: #a5d6a7; cursor: default; }
+  .error-msg {
+    color: #c62828;
+    font-size: 12px;
+    margin-top: 10px;
+    text-align: center;
+  }
+  .student-band {
+    background: #c8e6c9;
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: #2e7d32;
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 600;
+    flex-shrink: 0;
+  }
+  .sname { font-size: 15px; font-weight: 600; color: #1b5e20; }
+  .sclass { font-size: 12px; color: #388e3c; margin-top: 2px; }
+  .section-title {
+    font-size: 12px;
+    color: #558b2f;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .date-item {
+    background: #fff;
+    border: 1px solid #a5d6a7;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+  }
+  .date-item:active { background: #f1f8e9; }
+  .date-text { font-size: 13px; font-weight: 600; color: #1b5e20; }
+  .date-arrow { color: #81c784; font-size: 18px; }
+  .back-btn {
+    font-size: 13px;
+    color: #388e3c;
+    cursor: pointer;
+    margin-bottom: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .msg-date {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1b5e20;
+    margin-bottom: 12px;
+  }
+  .msg-card {
+    background: #fff;
+    border: 1px solid #a5d6a7;
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .msg-label {
+    font-size: 11px;
+    color: #81c784;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .msg-text { font-size: 14px; color: #333; line-height: 1.8; }
+  .msg-time { font-size: 11px; color: #a5d6a7; margin-top: 12px; text-align: right; }
+  .hidden { display: none; }
+  .logout-btn {
+    font-size: 12px;
+    color: #81c784;
+    cursor: pointer;
+    text-align: right;
+    margin-bottom: 12px;
+  }
+  .consult-btn-wrap {
+    margin-top: 20px;
+    text-align: center;
+  }
+  .consult-btn {
+    padding: 12px 32px;
+    background: #fff;
+    color: #2e7d32;
+    border: 2px solid #2e7d32;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .consult-btn:active { background: #f1f8e9; }
+  .consult-box {
+    background: #fff;
+    border: 1px solid #a5d6a7;
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 16px;
+  }
+  .consult-guide {
+    font-size: 13px;
+    color: #2e7d32;
+    line-height: 1.8;
+    margin-bottom: 12px;
+  }
+  .consult-box textarea {
+    width: 100%;
+    height: 100px;
+    padding: 10px;
+    border: 1px solid #a5d6a7;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #333;
+    outline: none;
+    resize: vertical;
+    line-height: 1.6;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+  .consult-box textarea:focus { border-color: #2e7d32; }
+  .consult-submit {
+    width: 100%;
+    margin-top: 10px;
+    padding: 11px;
+    background: #2e7d32;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .consult-submit:disabled { background: #aaa; cursor: not-allowed; }
+  .consult-done {
+    text-align: center;
+    color: #2e7d32;
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 12px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📚 학원 알림장</h1>
+  <p>선생님의 메세지를 확인하세요!</p>
+</div>
+
+<div class="container">
+
+  <div id="loginScreen">
+    <div class="login-box">
+      <div class="login-icon">🌿</div>
+      <div class="login-title">학부모 포털</div>
+      <div class="login-sub">[우리 아이 수업 리포트]</div>
+      <div class="field">
+        <label>학생 이름</label>
+        <input type="text" id="inputName" placeholder="김봉덕" />
+      </div>
+      <div class="field">
+        <label>학부모 연락처</label>
+        <input type="tel" id="inputPhone" placeholder="01012345678" />
+      </div>
+      <button class="btn" id="loginBtn" onclick="login()">확인하기</button>
+      <div class="error-msg" id="loginError"></div>
+    </div>
+  </div>
+
+  <div id="listScreen" class="hidden">
+    <div class="logout-btn" onclick="logout()">← 로그아웃</div>
+    <div class="student-band">
+      <div class="avatar" id="avatarChar"></div>
+      <div>
+        <div class="sname" id="studentName"></div>
+        <div class="sclass" id="studentClass"></div>
+      </div>
+    </div>
+    <div class="section-title">수업 기록</div>
+    <div id="dateList"></div>
+    <div class="consult-btn-wrap">
+      <button class="consult-btn" onclick="toggleConsult()">📋 상담 신청</button>
+    </div>
+    <div class="consult-box hidden" id="consultBox">
+      <div class="consult-guide">
+        상담 가능하신 요일과 시간, 간단한 상담 내용을 적어주시면 전화드리겠습니다.
+      </div>
+      <textarea id="consultText" placeholder="예) 화요일 오후 2시 이후 가능합니다. 수학 진도 관련해서 여쭤보고 싶습니다."></textarea>
+      <button class="consult-submit" id="consultSubmit" onclick="submitConsult()">신청하기</button>
+      <div class="consult-done hidden" id="consultDone">✅ 상담 신청이 완료되었습니다.</div>
+    </div>
+  </div>
+
+  <div id="detailScreen" class="hidden">
+    <div class="back-btn" onclick="showList()">‹ 목록으로</div>
+    <div class="student-band">
+      <div class="avatar" id="avatarChar2"></div>
+      <div>
+        <div class="sname" id="studentName2"></div>
+        <div class="sclass" id="studentClass2"></div>
+      </div>
+    </div>
+    <div class="msg-date" id="detailDate"></div>
+    <div class="msg-card">
+      <div class="msg-label">선생님 메세지</div>
+      <div class="msg-text" id="detailContent"></div>
+      <div class="msg-time" id="detailTime"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbzSJblgGLbS4hY-WMnjhgwWekId2Kx1LrdNMt944Bs1dGqKfvSchBrN60KFsdQfIZoCTw/exec';
+
+  let currentData = [];
+  let currentStudent = {};
+
+  async function gasCall(params) {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams(params).toString()
+    });
+    const text = await res.text();
+    return JSON.parse(text);
+  }
+
+  function normalizePhone(phone) {
+    return phone.replace(/[^0-9]/g, '');
+  }
+
+  async function login() {
+    const name  = document.getElementById('inputName').value.trim();
+    const phone = normalizePhone(document.getElementById('inputPhone').value);
+    const errEl = document.getElementById('loginError');
+    const btn   = document.getElementById('loginBtn');
+    errEl.textContent = '';
+
+    if (!name || !phone) {
+      errEl.textContent = '이름과 연락처를 모두 입력해주세요.';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = '확인 중...';
+
+    try {
+      const result = await gasCall({ action: 'portalLogin', name, phone });
+      if (result.success) {
+        currentData    = result.data;
+        currentStudent = { name: result.data[0].student_name, cls: result.data[0].class_name };
+        showList();
+      } else {
+        errEl.textContent = '로그인 정보가 일치하지 않습니다.';
+      }
+    } catch(e) {
+      errEl.textContent = '오류가 발생했습니다. 다시 시도해주세요.';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '확인하기';
+    }
+  }
+
+  function showList() {
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('detailScreen').classList.add('hidden');
+    document.getElementById('listScreen').classList.remove('hidden');
+
+    const first = currentStudent.name.charAt(0);
+    document.getElementById('avatarChar').textContent  = first;
+    document.getElementById('avatarChar2').textContent = first;
+    document.getElementById('studentName').textContent  = currentStudent.name;
+    document.getElementById('studentName2').textContent = currentStudent.name;
+    document.getElementById('studentClass').textContent  = currentStudent.cls;
+    document.getElementById('studentClass2').textContent = currentStudent.cls;
+
+    const listEl = document.getElementById('dateList');
+    listEl.innerHTML = '';
+
+    currentData.forEach(function(row, i) {
+      const d = new Date(row.lesson_date + 'T00:00:00');
+      const dateStr = d.getFullYear() + '년 ' +
+                      (d.getMonth()+1) + '월 ' +
+                      d.getDate() + '일 (' + ['일','월','화','수','목','금','토'][d.getDay()] + ')';
+      const item = document.createElement('div');
+      item.className = 'date-item';
+      item.innerHTML = '<span class="date-text">' + dateStr + '</span><span class="date-arrow">›</span>';
+      item.onclick = function() { showDetail(i); };
+      listEl.appendChild(item);
+    });
+  }
+
+  function showDetail(i) {
+    const row = currentData[i];
+
+    // 열람 로그 기록 (응답 기다리지 않음)
+    gasCall({
+      action:      'portalLogRead',
+      studentName: row.student_name,
+      className:   row.class_name,
+      parentPhone: row.parent_phone,
+      noticeDate:  row.lesson_date
+    });
+
+    const d = new Date(row.lesson_date + 'T00:00:00');
+    const dateStr = d.getFullYear() + '년 ' +
+                    (d.getMonth()+1) + '월 ' +
+                    d.getDate() + '일 (' + ['일','월','화','수','목','금','토'][d.getDay()] + ')';
+
+    const t = new Date(row.created_at);
+    const timeStr = t.getFullYear() + '-' +
+                    String(t.getMonth()+1).padStart(2,'0') + '-' +
+                    String(t.getDate()).padStart(2,'0') + ' ' +
+                    String(t.getHours()).padStart(2,'0') + ':' +
+                    String(t.getMinutes()).padStart(2,'0');
+
+    document.getElementById('detailDate').textContent    = dateStr;
+    document.getElementById('detailContent').textContent = row.notice_content;
+    document.getElementById('detailTime').textContent    = '전송: ' + timeStr;
+    document.getElementById('listScreen').classList.add('hidden');
+    document.getElementById('detailScreen').classList.remove('hidden');
+  }
+
+  function toggleConsult() {
+    document.getElementById('consultBox').classList.toggle('hidden');
+  }
+
+  async function submitConsult() {
+    const text = document.getElementById('consultText').value.trim();
+    if (!text) {
+      alert('상담 내용을 입력해주세요.');
+      return;
+    }
+
+    const btn = document.getElementById('consultSubmit');
+    btn.disabled = true;
+    btn.textContent = '전송 중...';
+
+    try {
+      await gasCall({
+        action:      'portalSendConsult',
+        className:   currentStudent.cls,
+        studentName: currentStudent.name,
+        text:        text
+      });
+
+      document.getElementById('consultBox').classList.add('hidden');
+      document.getElementById('consultDone').classList.remove('hidden');
+      document.getElementById('consultText').value = '';
+
+    } catch(e) {
+      alert('전송 실패. 다시 시도해주세요.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '신청하기';
+    }
+  }
+
+  function logout() {
+    currentData    = [];
+    currentStudent = {};
+    document.getElementById('inputName').value  = '';
+    document.getElementById('inputPhone').value = '';
+    document.getElementById('consultDone').classList.add('hidden');
+    document.getElementById('consultBox').classList.add('hidden');
+    document.getElementById('listScreen').classList.add('hidden');
+    document.getElementById('loginScreen').classList.remove('hidden');
+  }
+
+  document.getElementById('inputPhone').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') login();
+  });
+  document.getElementById('inputName').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') login();
+  });
+</script>
+</body>
+</html>
